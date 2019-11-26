@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <settings>
+    <group name="kitres://{bbac163c-41be-4ce7-b236-236f15ff18ca}/Activity_Monitoring_Headset/default"/>
     <group name="kitres://{bbac163c-41be-4ce7-b236-236f15ff18ca}/Headset/default">
         <item name="breakpoints">
             <item name="number">0</item>
