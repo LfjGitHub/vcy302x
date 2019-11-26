@@ -1,0 +1,13 @@
+file=app2
+
+#Chip Type: QCC3021
+#LK-VAM-CVC-SPK-0020->cVc Speaker 2-MIC (endfire or broadside)
+
+#Starting Address: 00025B00FF00
+#Ending Address: 00025B00FF0F
+#Number of Bluetooth Addresses: 16
+FeatureLicenseKey = [ 13 98 3E 21 BD 5A FE 47 A5 02 EA 44 4F B8 97 37 67 26 BF 5F 27 39 B3 6A 66 D8 B6 21 83 88 B5 45 B0 E8 9F 1B C6 BE A3 71 54 9E 62 50 0E 4F 60 32 C1 85 75 9F 69 49 DC DB BD 55 76 8D B0 DA 83 A0 ]
+
+USBProductString = [ 51 43 43 33 30 32 31 ]
+
+USBSerialNumberString = [ 41 42 43 44 45 46 30 31 32 33 34 35 36 37 38 39 ]
