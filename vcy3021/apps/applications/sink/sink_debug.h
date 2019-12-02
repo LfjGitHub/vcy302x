@@ -27,7 +27,7 @@ DESCRIPTION
  /*end of DO_NOT_DOCUMENT*/
 
     /*The global debug enable*/ 
-    #define DEBUG_PRINT_ENABLEDx
+    #define DEBUG_PRINT_ENABLED
     /* We want debug print turned on on
        For hydracore at the moment */
     #define DEBUG_PRINT_ENABLED
@@ -65,7 +65,7 @@ void printVmLogsInTestSystem (const char *format, ...);
 
         /* The individual Debug enables */
 
-        #define DEBUG_MAIN_L1x
+        #define DEBUG_MAIN_L1
         #define DEBUG_A2DPx
         #define DEBUG_ACCESSORYx
         #define DEBUG_AHIx
@@ -145,7 +145,7 @@ void printVmLogsInTestSystem (const char *format, ...);
         /* Sink Link Policy Debug */
         #define DEBUG_LPx
         /* Main System Messages Debug */
-        #define DEBUG_MAINx
+        #define DEBUG_MAIN
         #define DEBUG_MALLOCx 
         #define DEBUG_MAPCx
         /* Multi-Point Manager Debug */
@@ -170,7 +170,7 @@ void printVmLogsInTestSystem (const char *format, ...);
         #define DEBUG_USBx
 
         /* Debug Voice Assistant (VA) module */
-        #define DEBUG_VAx
+        #define DEBUG_VA		
 
         #define DEBUG_VOLUMEx
         #define DEBUG_WIREDx

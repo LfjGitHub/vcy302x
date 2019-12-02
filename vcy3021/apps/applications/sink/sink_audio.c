@@ -34,6 +34,7 @@ Copyright (c) 2005 - 2018 Qualcomm Technologies International, Ltd.
 #include "sink_callmanager.h"
 #include "sink_malloc_debug.h"
 #include "sink_usb.h"
+#include "sink_va.h"
 
 #include <audio_plugin_voice_variants.h>
 #include <audio_plugin_output_variants.h>
@@ -312,10 +313,19 @@ void audioHandleSyncConnectInd ( const HFP_AUDIO_CONNECT_IND_T *pInd )
 
 static void updateScoAudioRouting(hfp_call_state call_state)
 {
+#if 1
+	/*add following content by lfj,20191021 ,start*/
+    SinkVaAbortOnHFPCall();
+    if(call_state == hfp_call_state_idle||VaIsOpened())
+    {
+        sinkCancelAndSendLater(EventSysCheckAudioRouting, 3000);
+    }
+#else
     if(call_state == hfp_call_state_idle)
     {
         sinkCancelAndSendLater(EventSysCheckAudioRouting, ALLOWANCE_FOR_TRANSITION_IN_HFP_CALL_STATE);
     }
+#endif
     else
     {
         audioUpdateAudioRouting();

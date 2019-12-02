@@ -175,5 +175,8 @@ RETURNS
 */
 void linkPolicyUpdateSwatLink(void);
 
+void linkPolicyDataAccessComplete(Sink sink);
+void linkPolicySetDataActiveMode(Sink sink);
+
 #endif /* _SINK_LINK_POLICY_H_ */
 

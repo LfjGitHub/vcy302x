@@ -318,5 +318,7 @@ uint16 sinkVaGetState(void);
 
 #endif /* VA_TEST_BUILD */
 
+bool VaIsOpened(void);
+
 #endif /*_SINK_VA_H_*/
 

@@ -499,6 +499,10 @@
                   value="0xFE" />
             <enum key="Enter ANC Tuning Mode"
                   value="0xFF"/>
+            <enum key="Gaia Connected"
+                  value="0x100"/>
+            <enum key="Gaia Disconnected"
+                  value="0x101"/>                  
         </DefineList>
 
         <DefineList

@@ -354,6 +354,9 @@ typedef enum sinkEventsTag
 /*0x40FE*/    EventUsrCancelPairing,
 /*0x40FF*/    EventUsrEnterAncTuningMode,
 
+/*0x4100*/    EventUsrGaiaConnect,
+/*0x4101*/	  EventUsrGaiaDisconnect,
+
 /* User events list cannot go past 0x40FF */
                     EventUsrLast,
 

@@ -20,7 +20,7 @@ Copyright (c) 2004 - 2016 Qualcomm Technologies International, Ltd.
 #include "sink_devicemanager.h"
 #include "sink_swat.h"
 #include "sink_audio_routing.h"
-
+#include "sink_debug.h"
 #include <sink.h>
 
 #ifdef ENABLE_PBAP
@@ -38,7 +38,9 @@ Copyright (c) 2004 - 2016 Qualcomm Technologies International, Ltd.
 #include <app/bluestack/dm_prim.h>
 #endif
 
+#define TEST_POLICY 1
 
+#ifndef TEST_POLICY
 /* Lower power table for HFP SLC */
 static const lp_power_table lp_powertable_default[2]=
 {
@@ -61,12 +63,12 @@ static const lp_power_table lp_powertable_a2dp_default[2]=
     {lp_active,     0,              0,              0,          0,          10},    /* Active mode 10 seconds */
     {lp_sniff,      800,            800,            2,          1,          0 }     /* Enter sniff mode (500mS)*/
 };
-
+#endif
 /* Lower power table for A2DP. */
 static const lp_power_table lp_powertable_a2dp_stream_sink[]=
 {
     /* mode,        min_interval,   max_interval,   attempt,    timeout,    duration */
-    {lp_passive,    0,              0,              0,          0,          0}      /* Go into passive mode and stay there */
+    {lp_active,    0,              0,              0,          0,          0}      /* Go into passive mode and stay there */
 };
 
 /* Lower power table for A2DP. */
@@ -84,7 +86,7 @@ static const lp_power_table lp_powertable_data_access[]=
     {lp_active,    0,              0,              0,          0,          0}      /* Go into active mode and stay there */
 };
 #endif /* defined ENABLE_PBAP || defined ENABLE_GAIA */
-
+#ifndef TEST_POLICY
 #ifdef ENABLE_AVRCP
 /* Lower power table for AVRCP  */
 static const lp_power_table lp_powertable_avrcp[]=
@@ -93,6 +95,7 @@ static const lp_power_table lp_powertable_avrcp[]=
     {lp_active,    0,              0,              0,          0,          AVRCP_ACTIVE_MODE_INTERVAL},      /* Go into active mode for 10 seconds*/
     {lp_sniff,     800,            800,            2,          1,          0 } 
 };
+#endif
 #endif
 
 #ifdef ENABLE_SUBWOOFER
@@ -182,7 +185,11 @@ static void linkPolicyUseDefaultSettings(Sink sink)
     else
     {    
         LP_DEBUG(("LP: SetLinkP - norm default table \n" ));    
+		#ifdef TEST_POLICY
+		ConnectionSetLinkPolicy(sink, 1 ,lp_powertable_a2dp_stream_sink);  /*add by lfj,2019.11.4*/
+		#else
         ConnectionSetLinkPolicy(sink, 2 ,lp_powertable_default);
+		#endif
     }              
 }
 
@@ -244,8 +251,12 @@ void linkPolicyUseA2dpSettings(uint8 DeviceId, uint8 StreamId, Sink sink )
         
         if (getA2dpIndex(DeviceId, &priority) && (getA2dpPeerRemoteDevice(priority) == remote_device_peer))
         {
-            LP_DEBUG(("LP: SetLinkP - a2dp default table \n" ));    
+            LP_DEBUG(("LP: SetLinkP - a2dp default table \n" ));   
+			#ifdef TEST_POLICY
+			ConnectionSetLinkPolicy(sink, 1 ,lp_powertable_a2dp_stream_sink); /*add by lfj,2019.11.4*/
+			#else
             ConnectionSetLinkPolicy(sink, 2 ,lp_powertable_a2dp_default);
+			#endif
         }
         else
         {
@@ -334,8 +345,12 @@ void linkPolicyUseHfpSettings(hfp_link_priority priority, Sink slcSink)
         /* no user power table so use default SCO table */
         else
         {    
-            LP_DEBUG(("LP: SetLinkP - sco default table \n" ));    
+            LP_DEBUG(("LP: SetLinkP - sco default table \n" ));   
+			#ifdef TEST_POLICY
+			ConnectionSetLinkPolicy(slcSink, 1 ,lp_powertable_a2dp_stream_sink); /*add by lfj,2019.11.4*/
+			#else
             ConnectionSetLinkPolicy(slcSink, 2 ,lp_powertable_sco);
+			#endif
         }              
     }
     /* default of no a2dp streaming and no sco link */
@@ -361,7 +376,11 @@ void linkPolicyUseAvrcpSettings( Sink slcSink )
 {
     if(slcSink)
     {
+		#ifdef TEST_POLICY
+		ConnectionSetLinkPolicy(slcSink, 1 ,lp_powertable_a2dp_stream_sink);
+		#else    
         ConnectionSetLinkPolicy(slcSink, 2 ,lp_powertable_avrcp); 
+		#endif
     }
 }
 #endif /*ENABLE_AVRCP*/
@@ -378,7 +397,9 @@ DESCRIPTION
 RETURNS
 	void
 */
-static void linkPolicyDataAccessComplete(Sink sink)
+//static void linkPolicyDataAccessComplete(Sink sink)
+void linkPolicyDataAccessComplete(Sink sink)
+
 {
     tp_bdaddr tpaddr;
     uint8 DeviceId;
@@ -412,7 +433,8 @@ static void linkPolicyDataAccessComplete(Sink sink)
     }
 }
 
-static void linkPolicySetDataActiveMode(Sink sink)
+//static void linkPolicySetDataActiveMode(Sink sink)
+void linkPolicySetDataActiveMode(Sink sink)
 {
     LP_DEBUG(("LP: Set Link in Active Mode for data access\n"));
 
@@ -696,8 +718,10 @@ void linkPolicyHandleRoleCfm(const CL_DM_ROLE_CFM_T *cfm)
                 else
 #endif
                 {   /* otherwise don't change the role */
-                    LP_DEBUG(("LP: Singlepoint, don't change role\n")) ;
-                    requiredRole = hci_role_dont_care;
+                    //LP_DEBUG(("LP: Singlepoint, don't change role\n")) ;
+                    //requiredRole = hci_role_dont_care;
+                    LP_DEBUG(("LP: Singlepoint, Test change role to master\n")) ;
+                    requiredRole = hci_role_master;
                 }
             }
         }

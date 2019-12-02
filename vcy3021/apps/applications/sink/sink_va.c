@@ -20,6 +20,7 @@ NOTES
 #include "sink_audio_routing.h"
 #include "sink_main_task.h"
 #include "sink_audio_indication.h"
+#include "sink_debug.h"
 
 #ifdef ENABLE_VOICE_ASSISTANT
 #include <message.h>
@@ -189,7 +190,14 @@ static bool VaIsSessionStageIdle(void)
     VA_INFO(("VA Session Stage is %d\n", va.session_stage));
     return ((va.session_stage & VA_SESSION_STAGE_IDLE) != 0);
 }
-
+/*add following content by lfj,20191021 */
+bool VaIsOpened(void)
+{
+    if((VA_IS_SESSION_RUNNING) ||(!VaIsSessionStageIdle()))
+        return TRUE;
+    else
+   	 return FALSE;
+}
 /* helper function to get Session Active flag */
 static bool VaIsSessionStageVoiceCaptureStart(void)
 {
@@ -377,8 +385,16 @@ static void VaHandleEventsInIdle(va_event_id_t event)
         case va_event_session_cancelled:
         case va_event_answer_start:
         case va_event_answer_stop:
+			VA_INFO(("This event is not expected in this state\n"));
+			break;
         case va_event_abort_session:
-            VA_INFO(("This event is not expected in this state\n"));
+			{   /*add following content by lfj,20191021*/
+				VaStopCommandRspTimer();
+				gaiaVoiceAssistantCancel();
+				VaStopVoiceCapture();
+				VaExitActiveSession();
+            	
+        	}
             break;
 
         default:
@@ -681,8 +697,9 @@ void SinkVaCancelSessionEvent(void)
 void SinkVaHandleStartCfm(bool status)
 {
     VaStopCommandRspTimer();
-
-    if(!status)
+	
+    //if(!status)
+    if(!VaIsOpened()||!status)  /*modify by lfj 20191021*/
     {
         /* Failed to start session, play error tone to user */
         MessageSend(sinkGetMainTask(), EventSysVASessionError , 0);
@@ -705,6 +722,7 @@ void SinkVaHandleCancelCfm(void)
 
 void SinkVaHandleDataReqInd(void)
 {
+    if(VaIsOpened()&& sinkCallManagerGetHfpCallState(hfp_primary_link)==hfp_call_state_idle) /*add by lfj 20191021*/
     /*  remote application now requires the va data, so start capturing the voice */
     VaStartVoiceCaptureEvent();
 }

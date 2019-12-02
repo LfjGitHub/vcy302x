@@ -401,7 +401,7 @@
                     DefaultValue="Voice Assistant Session Error"/>
                 <PatternArrayConfigItem
                     ShortId="Tone"
-                    DefaultValue="Double Beep Error Tone" />
+                    DefaultValue="No Tone" />
             </PatternArrayRow>
         </ConfigPatternArray>
     </ConfigGroup>

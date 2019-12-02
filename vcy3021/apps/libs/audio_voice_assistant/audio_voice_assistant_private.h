@@ -29,7 +29,7 @@ typedef struct
 #define VA_AUDIO_SAMPLE_RATE       16000
 #define VA_CHAIN_INPUT_BUFFER_SIZE 1204
 
-#define INITIAL_GAIN_SCALED_DB     GainIn60thdB(-30)
+#define INITIAL_GAIN_SCALED_DB     GainIn60thdB(0) //GainIn60thdB(-30) /*modified it by lfj 2019.11.26*/
 #define VA_LATENCY_IN_MS           (20)
 #define VA_LATENCY_IN_US           (VA_LATENCY_IN_MS * US_PER_MS)
 

@@ -206,7 +206,10 @@ extern void _sink_init(void);
 extern void _init(void);
 #endif
 static void IndicateEvent(MessageId id);
-
+#define TEST_CALLER_NUMBER_PROMT
+#ifdef TEST_CALLER_NUMBER_PROMT
+static bool CallerNumberTimes=0;  /*add by lfj*/
+#endif
 /*************************************************************************
 NAME
     sinkCancelAndSendLater
@@ -1142,12 +1145,17 @@ static void handleUEMessage  ( Task task, MessageId id, Message message )
             MAIN_DEBUG(("HS: Reject\n" )) ;
             /* Reject incoming call - only valid for instances of HFP */
             sinkAnswerOrRejectCall( FALSE );
+			#ifdef TEST_CALLER_NUMBER_PROMT
+			CallerNumberTimes=FALSE; /*add by lfj*/
+			#endif
         break ;
         case (EventUsrCancelEnd):
             MAIN_DEBUG(("HS: CancelEnd\n" )) ;
             /* Terminate the current ongoing call process */
             sinkHangUpCall();
-
+			#ifdef TEST_CALLER_NUMBER_PROMT
+			CallerNumberTimes=FALSE;  /*add by lfj*/
+			#endif
         break ;
         case (EventUsrTransferToggle):
             MAIN_DEBUG(("HS: Transfer\n" )) ;
@@ -1879,6 +1887,13 @@ static void handleUEMessage  ( Task task, MessageId id, Message message )
             MAIN_DEBUG(("EventSysEndOfCall\n")) ;
             displayRemoveText(SINK_TEXT_TYPE_CALLER_INFO);
             displayRemoveText(SINK_TEXT_TYPE_DEVICE_STATE);
+			sinkEventQueueDelete();		  //add by lfj ,2019-11-4	
+			audioDisconnectRoutedVoice();  //add by lfj
+	     	MessageCancelAll(&theSink.task,EventUsrVoiceAssistantStart); /*add following content by lfj,20191021 */
+			MessageSendLater(&theSink.task, EventUsrVoiceAssistantStart, 0, D_SEC(1)); //add by lfj
+			#ifdef TEST_CALLER_NUMBER_PROMT
+			CallerNumberTimes=FALSE;
+			#endif
         break;
         case EventSysResetComplete:
             MAIN_DEBUG(("EventSysResetComplete\n")) ;
@@ -3521,6 +3536,7 @@ static void handleUEMessage  ( Task task, MessageId id, Message message )
 
         case EventSysVASessionError:
             MAIN_DEBUG(("HS: Received Vocie Assistant Session Error\n"));
+            MessageSendLater(&theSink.task, EventUsrVoiceAssistantStart, 0, D_SEC(2)); //add by lfj
             break;
 
 #ifdef ENABLE_GAIA
@@ -3705,9 +3721,17 @@ static void handleHFPMessage  ( Task task, MessageId id, Message message )
         {
             MAIN_DEBUG(("HFP - Call state %d\n", ((HFP_CALL_STATE_IND_T*)message)->call_state));
             /* If HFP is in call then cancel the VA session. */
-            if(((HFP_CALL_STATE_IND_T*)message)->call_state != hfp_call_state_idle)
+            /*if(((HFP_CALL_STATE_IND_T*)message)->call_state != hfp_call_state_idle)*/
+			/*modify these by lfj 2019.11.26*/
+            if(((HFP_CALL_STATE_IND_T*)message)->call_state == hfp_call_state_active ||
+				((HFP_CALL_STATE_IND_T*)message)->call_state == hfp_call_state_held_active ||
+				((HFP_CALL_STATE_IND_T*)message)->call_state == hfp_call_state_held_remaining ||
+				((HFP_CALL_STATE_IND_T*)message)->call_state == hfp_call_state_multiparty ||
+				((HFP_CALL_STATE_IND_T*)message)->call_state == hfp_call_state_outgoing
+				)
             {
                 SinkVaAbortOnHFPCall();
+		  		MessageCancelAll(&theSink.task,EventUsrVoiceAssistantStart);  /*add following content by lfj,20191126 */
             }
             sinkHandleCallInd((const HFP_CALL_STATE_IND_T*)message);
         }
@@ -3806,8 +3830,15 @@ static void handleHFPMessage  ( Task task, MessageId id, Message message )
             /* Attempt to play caller name */
             if(!AudioPromptPlayCallerName (ind->size_name, ind->caller_name))
             {
+            	MAIN_DEBUG_L1(("AudioPromptPlayCallerNumber\n"));
+				#ifdef TEST_CALLER_NUMBER_PROMT
                 /* Caller name not present or not supported, try to play number */
+				if(!CallerNumberTimes)
                 AudioPromptPlayCallerNumber(ind->size_number, ind->caller_number) ;
+				CallerNumberTimes=TRUE;
+				#else
+				AudioPromptPlayCallerNumber(ind->size_number, ind->caller_number) ;
+				#endif
             }
 
             if (ind->size_name)
@@ -3879,6 +3910,7 @@ static void handleHFPMessage  ( Task task, MessageId id, Message message )
     case HFP_AUDIO_CONNECT_IND:
         MAIN_DEBUG_L1(("HFP_AUDIO_CONNECT_IND\n")) ;
         audioHandleSyncConnectInd( (const HFP_AUDIO_CONNECT_IND_T *)message ) ;
+        MessageCancelAll(&theSink.task,EventUsrVoiceAssistantStart); /*add following content by lfj,20191021 */
     break ;
     case HFP_AUDIO_CONNECT_CFM:
         {

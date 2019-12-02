@@ -4678,7 +4678,19 @@ static bool gaia_handle_control_command(Task task, GAIA_UNHANDLED_COMMAND_IND_T 
             gaia_send_invalid_parameter(GAIA_COMMAND_FIND_MY_REMOTE);
 
         return TRUE;
-
+		
+	case GAIA_COMMAND_USR_ANSWER: 		/*EventUsrAnswer, add it by lfj*/
+		MessageSend (&theSink.task , EventUsrAnswer , 0) ;
+		return TRUE;
+		
+	case GAIA_COMMAND_USR_REJECT: 		/*EventUsrReject,add it by lfj**/
+		MessageSend (&theSink.task , EventUsrReject , 0) ;
+		return TRUE;
+		
+	case GAIA_COMMAND_USR_CANCEL_END:	/*EventUsrCancelEnd,add it by lfj**/
+		MessageSend (&theSink.task , EventUsrCancelEnd , 0) ;
+		return TRUE;
+		
     default:
         return FALSE;
     }
@@ -4965,6 +4977,8 @@ void handleGaiaMessage(Task task, MessageId id, Message message)
                     GaiaOnTransportConnect(m->transport);
                 }
             }
+			sinkAudioIndicationPlayEvent(EventUsrGaiaConnect); //add audio prompts by lfj 
+			MessageSendLater(&theSink.task, EventUsrVoiceAssistantStart, 0, D_SEC(2)); //add by lfj
         }
         break;
 
@@ -4978,6 +4992,8 @@ void handleGaiaMessage(Task task, MessageId id, Message message)
             gaiaResetUpgradeInProgress();
             /* GAIA link got disconnected, so as good as getting session cancel indication */
             SinkVaHandleDisconnect();
+            sinkAudioIndicationPlayEvent(EventUsrGaiaDisconnect); //add audio prompts by lfj
+            MessageSendLater(&theSink.task, EventUsrVoiceAssistantCancel, 0, D_SEC(0)); //add by lfj
         }
         break;
 
@@ -5085,6 +5101,22 @@ void handleGaiaMessage(Task task, MessageId id, Message message)
             GAIA_VA_START_CFM_T *cfm = (GAIA_VA_START_CFM_T *) message;
             GAIA_DEBUG(("G: GAIA_VA_START_CFM: %u\n", cfm->success));
             SinkVaHandleStartCfm(cfm->success);
+			/*add following content by lfj,20191021 ,start*/
+            Sink sink;
+            sink = GaiaTransportGetSink(cfm->transport);
+            if (sink)
+            {
+                if (cfm->success)
+                {
+                    /*  Set link policy to expedite download  */
+                    linkPolicySetDataActiveMode(sink);
+                }
+            }
+            else
+            {
+                GAIA_DEBUG(("G: no sink\n"));
+            }
+			/*add following content by lfj,20191021,end*/
         }
         break;
 
@@ -5092,6 +5124,19 @@ void handleGaiaMessage(Task task, MessageId id, Message message)
         {
             GAIA_DEBUG(("G: GAIA_VA_CANCEL_CFM\n"));
             SinkVaHandleCancelCfm();
+			/*add following content by lfj,20191021 ,start*/
+
+            Sink sink;
+            sink = GaiaTransportGetSink(((GAIA_VA_CANCEL_CFM_T *)message)->transport);
+            if (sink)
+            {
+                linkPolicyDataAccessComplete(sink);
+            }
+            else
+            {
+                GAIA_DEBUG(("G:GAIA_VA_CANCEL_CFM no sink\n"));
+            }
+			/*add following content by lfj,20191021,end*/
         }
         break;
         
@@ -5106,11 +5151,37 @@ void handleGaiaMessage(Task task, MessageId id, Message message)
         {
             GAIA_DEBUG(("G: GAIA_VA_CANCEL_IND Reason: %u\n", ((GAIA_VA_CANCEL_IND_T *)message)->reason));
             SinkVaHandleCancelInd();
+			/*add following content by lfj,20191021 ,start*/
+            Sink sink;
+            sink = GaiaTransportGetSink(((GAIA_VA_CANCEL_IND_T *)message)->transport);
+            if (sink)
+            {
+                linkPolicyDataAccessComplete(sink);
+            }
+            else
+            {
+                GAIA_DEBUG(("G: GAIA_VA_CANCEL_IND -no sink\n"));
+            }
+			/*add following content by lfj,20191021,end*/	
         }
         break;
 
     case GAIA_VA_VOICE_END_IND:
-        SinkVaHandleVoiceEndInd();
+		{
+        	SinkVaHandleVoiceEndInd();
+			/*add following content by lfj,20191021,start*/
+            Sink sink;
+            sink = GaiaTransportGetSink(((GAIA_VA_VOICE_END_IND_T *)message)->transport);
+            if (sink)
+            {
+                linkPolicyDataAccessComplete(sink);
+            }
+            else
+            {
+                GAIA_DEBUG(("G: GAIA_VA_VOICE_END_IND-no sink\n"));
+            }
+			/*add following content by lfj,20191021,end*/	
+    	}
         break;
 
     case GAIA_VA_ANSWER_START_IND:

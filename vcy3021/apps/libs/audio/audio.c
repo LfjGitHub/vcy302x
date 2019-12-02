@@ -1017,6 +1017,7 @@ bool AudioStartVoiceCapture ( Task app_task)
 
 bool AudioStopVoiceCapture(void)
 {
+    MessageCancelAll(AudioGetVaPlugin(), AUDIO_PLUGIN_START_VOICE_CAPTURE_MSG); /*add  the funtion by lfj 2019.11.26*/
     MessageSend(AudioGetVaPlugin(), AUDIO_PLUGIN_STOP_VOICE_CAPTURE_MSG, NULL);
     return TRUE;
 }

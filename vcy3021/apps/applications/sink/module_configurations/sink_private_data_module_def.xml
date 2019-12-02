@@ -391,7 +391,7 @@
             Desc="If this item is set the sink goes into pairing mode if it fails to connect with any paired AG, otherwise it goes into connectable mode."
             Type="bool"
             Size="1"
-            DefaultValue="false"
+            DefaultValue="true"
             ConfigGroupPath="./[@ShortId='bluetooth']/[@ShortId='connection_management']/[@ShortId='pairing']"/>
         <ConfigItem
             Id="Do Not Go Discoverable during Link Loss"

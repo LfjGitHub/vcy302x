@@ -2384,7 +2384,7 @@ static bool audioRouteA2dpIfAvailable(audio_sources source)
             if(!a2dpAudioSinkMatch(index, sinkAudioGetRoutedAudioSink()))
             {
                 /* Inform VA to Abort session as A2DP audio need to be routed .*/
-                SinkVaAbortOnA2dpStream();
+                //SinkVaAbortOnA2dpStream();   //remove by lfj
                 a2dp_routed = routeAudioSource(source);
             }
         }
