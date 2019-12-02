@@ -780,5 +780,19 @@ void sinkDataSetDisplayLinkKeys(bool displayLinkKeys);
  */
 uint16 sinkDataGetPairingReminderInterval(void);
 
+/**********************************************************************
+    @brief Interfaces to get Audio SS disable flag
+
+    @return bool
+ */
+bool GetsinkIsAudioSSEnable(void);
+
+/**********************************************************************
+    @brief Interfaces to set Audio SS disable flag
+
+    @return void
+ */
+void SetsinkIsAudioSSEnable(bool enable);
+
 #endif /* _SINK_PRIVATE_DATA_H_ */
 

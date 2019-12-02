@@ -15,3 +15,8 @@ DigMic1G722FilterEnable = true
 DigMic1G722FirEnable = true
 DigMic2G722FilterEnable = true
 DigMic2G722FirEnable = true
+
+#This MIB key is required for the DAC timeout to work
+CodecOutputDisableTimeout = 59000000
+
+474 = %[01 00 01 00 00 00 00 00 00 00 00 00 00 00]%

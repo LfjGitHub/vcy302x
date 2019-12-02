@@ -25,6 +25,7 @@ Part of 6.3.0
 #include <message.h>
 #include <hfp.h>
 #include <local_device.h>
+//#include <transport_manager.h>
 
 #include "sink_private_data.h"
 #include "sink_main_task.h"
@@ -34,7 +35,7 @@ Part of 6.3.0
 #include "sink_scan.h"
 #include "sink_slc.h"
 #include "sink_ahi.h"
-
+#include "sink_accessory.h"
 #include "sink_hfp_data.h"
 #include "sink_inquiry.h"
 #include "sink_devicemanager.h"
@@ -116,6 +117,10 @@ Part of 6.3.0
 #include "sink_peer.h"
 #endif
 
+#ifdef ENABLE_FAST_PAIR
+#include "sink_fast_pair.h"
+#endif
+
 #include "sink_linkloss.h"
 #include "sink_sc.h"
 
@@ -165,10 +170,11 @@ Part of 6.3.0
 #include <spp_common.h>
 #include "ahi_test.h"
 #include "sink_spp_qualification.h"
+//#include "sink_dfu_ps.h"
 
 #include <display.h>
 #include <display_plugin_if.h>
-
+#include <vmal.h>
 
 #ifdef DEBUG_MAIN
     #define MAIN_DEBUG(x) DEBUG(x)
@@ -597,7 +603,19 @@ static void handleCLMessage ( Task task, MessageId id, Message message )
             MAIN_DEBUG_L1(("CL_DM_DUT_CFM [%x]\n", ((const CL_DM_DUT_CFM_T*)message)->status));
         }
         break;
+#ifdef ENABLE_FAST_PAIR
+        case CL_CRYPTO_GENERATE_SHARED_SECRET_KEY_CFM:
+        case CL_CRYPTO_HASH_CFM:
+        case CL_CRYPTO_ENCRYPT_CFM:
+        case CL_CRYPTO_DECRYPT_CFM:
+        {
+            MAIN_DEBUG_L1(("CL_CRYPTO_IND\n"));
 
+            sinkFastPairHandleMessages(task, id, message);
+        }
+        break;
+
+#endif
             /* filter connection library messages */
         case CL_SDP_REGISTER_CFM:
         case CL_DM_WRITE_INQUIRY_ACCESS_CODE_CFM:
@@ -653,7 +671,8 @@ static bool sinkPowerProcessEventPower(const MessageId EventPower)
         {
             case EventUsrPowerOn:
             case EventSysPowerOnPanic:
-                MAIN_DEBUG(("HS: Power On\n" )) ;
+                MAIN_DEBUG(("HS: Power On and setting SetsinkIsAudioSSEnable=0\n" )) ;
+                SetsinkIsAudioSSEnable(FALSE);
                 if (stateManagerGetState() == deviceLimbo)
                 {
                     displaySetState(TRUE);
@@ -825,6 +844,9 @@ static bool sinkPowerProcessEventPower(const MessageId EventPower)
                     }
 #endif
 
+#ifdef ENABLE_FAST_PAIR
+                    sinkFastPairDisconnectLELink();
+#endif
 					/* generate event to drive EQ indicator */
 					sinkAudioEQOperatingStateIndication();
 
@@ -1200,6 +1222,12 @@ static void handleUEMessage  ( Task task, MessageId id, Message message )
         case (EventUsrEnterPairing):
             MAIN_DEBUG(("HS: EnterPair [%d]\n" , lState )) ;
 
+#ifdef ENABLE_FAST_PAIR
+            if(lState != deviceLimbo)
+            {
+                sinkBleBondableEvent();
+            }
+#endif
             /*go into pairing mode*/
             if (( lState != deviceLimbo) && (lState != deviceConnDiscoverable ))
             {
@@ -1212,6 +1240,14 @@ static void handleUEMessage  ( Task task, MessageId id, Message message )
                 lIndicateEvent = FALSE ;
             }
         break ;
+#ifdef ENABLE_FAST_PAIR
+        case EventSysFastPairStateTimeout:
+            {
+                MAIN_DEBUG(("EventSysFastPairStateTimeout\n"));
+                sinkFastPairSetFastPairState(fast_pair_idle);
+            }
+            break;
+#endif
         case EventUsrBAStartAssociation:
             {
                 MAIN_DEBUG(("EventUsrBroadcastAudioStartAssociation\n"));
@@ -1638,6 +1674,10 @@ static void handleUEMessage  ( Task task, MessageId id, Message message )
 
                 if(INQUIRY_ON_PDL_RESET)
                     MessageSend(&theSink.task, EventUsrRssiPair, 0);
+
+#ifdef ENABLE_FAST_PAIR
+                sinkFastPairClearAccountKeys();
+#endif
             }
         break ;
         case ( EventSysLimboTimeout ):
@@ -2829,7 +2869,7 @@ static void handleUEMessage  ( Task task, MessageId id, Message message )
             if((!sinkAudioIsAudioRouted()) && (!sinkAudioIsVoiceRouted()))
             {
                 MAIN_DEBUG (( "HS : EventSysCheckAudioAmpDrive turn off amp\n" ));
-                PioDrivePio(PIO_AUDIO_ACTIVE, FALSE);
+                setAudioAmplifier(FALSE);
             }
             else
                 lIndicateEvent = FALSE;
@@ -3568,6 +3608,16 @@ static void handleUEMessage  ( Task task, MessageId id, Message message )
             break ;
 #endif /* ENABLE_PEER */
 
+        case EventUsrOperatorFrameworkEnable:
+            MAIN_DEBUG(("HS: EventUsrOperatorFrameworkEnable so incrementing operator framework\n"));
+            PanicFalse(VmalOperatorFrameworkEnableMainProcessor(TRUE));
+            break;
+
+        case EventUsrOperatorFrameworkDisable:
+            MAIN_DEBUG(("HS: EventUsrOperatorFrameworkDisable so decrementing operator framework\n"));
+            PanicFalse(VmalOperatorFrameworkEnableMainProcessor(FALSE));
+            break;
+
         default :
             MAIN_DEBUG_L1(( "HS : UE unhandled!! [%x]\n", id ));
         break ;
@@ -4111,7 +4161,7 @@ static void handleAudioPluginMessage( Task task, MessageId id, Message message )
 
                 MAIN_DEBUG(("HS: AUDIO signal %u\n", signal_detected));
                 sinkAudioSetSilence(!signal_detected);
-                PioDrivePio(PIO_AUDIO_ACTIVE, signal_detected);
+                setAudioAmplifier(signal_detected);
             }
         }
         break;
@@ -4124,6 +4174,8 @@ static void handleAudioPluginMessage( Task task, MessageId id, Message message )
         case AUDIO_BA_RECEIVER_START_SCAN_VARIANT_IV:
         case AUDIO_BA_RECEIVER_RESET_BD_ADDRESS:
         case AUDIO_BA_RECEIVER_INDICATE_STREAMING_STATE:
+        //case AUDIO_BA_RECEIVER_AFH_CHANNEL_MAP_CHANGE_PENDING:
+        //case AUDIO_BA_RECEIVER_RESET_SCM_RECEIVER:
         {
             SinkBroadcastAudioHandlePluginUpStreamMessage(task, id, message);
         }

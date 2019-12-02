@@ -76,6 +76,8 @@ Copyright (c) 2005 - 2017 Qualcomm Technologies International, Ltd.
 
 #define MAXIMUM_NUMBER_OF_SOURCES   7
 
+#define DELAY_AUDIO_SS_DISABLE_MS 60000
+
 /*Byte offsets used in mapping the parameters defined in the user_eq_band_t structure
  * into a uint8 array.
  */
@@ -378,6 +380,8 @@ void sinkAudioInit( void )
         AudioConfigSetMicrophoneBiasVoltage(MIC_BIAS_1, read_data->mic_bias_drive_voltage.mic_bias_1_voltage);
 		
         AudioConfigSetRenderingMode(read_data->AudioRenderingMode);
+
+        //AudioConfigSetUseSramForA2dp(read_data->useSram);
         
         configManagerReleaseConfig(SINK_AUDIO_READONLY_CONFIG_BLK_ID);
     }
@@ -1609,22 +1613,55 @@ void audioUpdateAudioActivePio(void)
 {
     if(sinkAudioIsAudioRouted() && !sinkAudioSilentAnalogueIsRouted())
     {
-        PioDrivePio(PIO_AUDIO_ACTIVE, TRUE);
+        setAudioAmplifier(TRUE);
 }
     else if (!IsAudioBusy())
     { 
-        PioDrivePio(PIO_AUDIO_ACTIVE, FALSE);
+        setAudioAmplifier(FALSE);
     }
+}
+
+
+void setAudioAmplifier(bool enable)
+{
+    AUD_DEBUG(("AUD: setAudioAmplifier() setting PIO_AUDIO_ACTIVE = %x. sinkAudioIsVoiceRouted = %x and sinkAudioIsAudioRouted() = %x\n",enable,sinkAudioIsVoiceRouted(),sinkAudioIsAudioRouted()));
+    if (GetsinkIsAudioSSEnable()) /*If Audio SS is curently enabled*/
+    {
+        if(!enable && !sinkAudioIsVoiceRouted()) /* If amplifier is set to be disabled and voice not active*/
+        {
+            AUD_DEBUG(("AUD: Sending EventUsrOperatorFrameworkDisable for %u ms later\n", DELAY_AUDIO_SS_DISABLE_MS));
+            MessageSendLater(&theSink.task, EventUsrOperatorFrameworkDisable, 0, DELAY_AUDIO_SS_DISABLE_MS); /* Audio SS will be disabled in the preconfigured timeout period */
+            SetsinkIsAudioSSEnable(FALSE); /* Setting global flag to false*/
+        }
+    }
+    else /*If Audio SS is currently disabled or will be disabled once the timeout expires*/
+    {
+        if(enable || sinkAudioIsVoiceRouted()) /* If the amplifier is enabled or voice is active */
+        {
+            if (MessageCancelFirst(&theSink.task,EventUsrOperatorFrameworkDisable)) /*If message has been sent to disable the Audio SS*/
+            {
+                AUD_DEBUG(("AUD: Audio SS is currently enabled but set to be disabled after timeout so cancelling timeout\n"));
+                SetsinkIsAudioSSEnable(TRUE);
+            }
+            else
+            {
+                AUD_DEBUG(("AUD: Enable the Audio SS\n"));
+                MessageSend(&theSink.task,EventUsrOperatorFrameworkEnable,0);
+                SetsinkIsAudioSSEnable(TRUE);
+            }
+        }
+    }
+    PioDrivePio(PIO_AUDIO_ACTIVE, enable);
 }
 
 void enableAudioActivePio(void)
 {
-    PioDrivePio(PIO_AUDIO_ACTIVE, TRUE);
+    setAudioAmplifier(TRUE);
 }
 
 void disableAudioActivePio(void)
 {
-    PioDrivePio(PIO_AUDIO_ACTIVE, FALSE);
+    setAudioAmplifier(FALSE);
 }
 
 void disableAudioActivePioWhenAudioNotBusy(void)

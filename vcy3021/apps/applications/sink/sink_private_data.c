@@ -28,6 +28,8 @@ DESCRIPTION
 #include "sink_malloc_debug.h"
 #include "sink_configmanager.h"
 
+#include <local_device.h>
+
 #ifdef DEBUG_SINK_PRIVATE_DATA
 #define SINK_DATA_DEBUG(x) DEBUG(x)
 #define SINK_DATA_ERROR(x) TOLERATED_ERROR(x)
@@ -55,6 +57,7 @@ typedef struct __sinkdata_globaldata_t
     unsigned _spare2_:6;
     uint16 NoOfReconnectionAttempts; /* Holdes current number of reconnection attempts */
     uint16 connection_in_progress;  /* flag used to block role switch requests until all connections are complete or abandoned */
+    unsigned is_audio_ss_enable:1; /* Flag to check if the audio ss is set to be disabled */
 #ifdef ENABLE_SQIFVP
     unsigned               partitions_mounted:8;
     unsigned               unused:8;
@@ -1343,4 +1346,18 @@ uint16 sinkDataGetPairingReminderInterval(void)
     }
 
     return interval;
+}
+/**********************************************************************
+    Interface to get Audio SS disable flag
+ */
+bool GetsinkIsAudioSSEnable(void)
+{
+    return (GSINKDATA.is_audio_ss_enable ? TRUE : FALSE);
+}
+/**********************************************************************
+    Interface to set Audio SS disable flag
+ */
+void SetsinkIsAudioSSEnable(bool enable)
+{
+    GSINKDATA.is_audio_ss_enable = enable;
 }

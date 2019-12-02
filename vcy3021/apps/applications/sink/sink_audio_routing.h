@@ -980,6 +980,17 @@ RETURNS
 */
 bool audioRouteIsScoActive(void);
 
+/****************************************************************************
+NAME
+    setAudioAmplifier
+
+DESCRIPTION
+    Enabled or disables the audio active PIO
+
+RETURNS
+    None
+*/
+void setAudioAmplifier(bool enable);
 
 
 #endif /* _SINK_AUDIO_ROUTING_H_ */

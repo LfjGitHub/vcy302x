@@ -282,8 +282,8 @@ typedef enum sinkEventsTag
 
 /*0x40C0*/    EventUsrGaiaUser17,
 /*0x40C1*/    EventUsrGaiaUser18,
-/*0x40C2*/    EventUsrGaiaUser19,
-/*0x40C3*/    EventUsrGaiaUser20,
+/*0x40C2*/    EventUsrOperatorFrameworkEnable,
+/*0x40C3*/    EventUsrOperatorFrameworkDisable,
 
 /*0x40C4*/    EventUsrQuickChargeStatInterrupt,
 /*0x40C5*/    EventUsrUnused40C5,
@@ -666,6 +666,9 @@ typedef enum sinkEventsTag
 /*0x47F1*/    EventSysVASessionError,
 /*0x47F2*/    EventSysPeerStreamTimeout,
 /*0x47F3*/    EventSysUpgradeOptimisation,
+
+/*0x47F4*/    EventSysBAReceiverModeActive,
+/*0x47F5*/    EventSysFastPairStateTimeout,
 
               EventSysLast
 
