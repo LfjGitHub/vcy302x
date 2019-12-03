@@ -745,7 +745,7 @@ static bool sinkPowerProcessEventPower(const MessageId EventPower)
                 PioDriveUserPio(PioGetUserPioState());
 
                 sinkSportHealthEnableDefault();
-                
+                MessageSend(&theSink.task, EventUsrBleStartBonding, NULL);  /*add it by lfj ,2019.12.3*/
                 break ;
 
             case EventSysPeerGeneratedPowerOff:
