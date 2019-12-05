@@ -2,7 +2,7 @@
 *.d
 *.log
 *.obj
-
+*.x2p.user
 vcy3021/apps/applications/sink/config_definition.c
 vcy3021/apps/applications/sink/config_definition.gz
 vcy3021/apps/applications/sink/config_definition.h
