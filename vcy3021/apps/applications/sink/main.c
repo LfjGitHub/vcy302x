@@ -745,7 +745,11 @@ static bool sinkPowerProcessEventPower(const MessageId EventPower)
                 PioDriveUserPio(PioGetUserPioState());
 
                 sinkSportHealthEnableDefault();
-                MessageSend(&theSink.task, EventUsrBleStartBonding, NULL);  /*add it by lfj ,2019.12.3*/
+
+                //MessageSend(&theSink.task, EventUsrBleStartBonding, NULL);  /*add it by lfj ,2019.12.3*/
+                //MessageSendLater(&theSink.task , EventUsrBleStartBonding , 0 , D_SEC(3)) ;
+                //MessageSendLater(&theSink.task , EventUsrBleStartBonding , 0 , D_SEC(10)) ;
+
                 break ;
 
             case EventSysPeerGeneratedPowerOff:
@@ -2868,7 +2872,7 @@ static void handleUEMessage  ( Task task, MessageId id, Message message )
                turn off the audio amplifier */
             if((!sinkAudioIsAudioRouted()) && (!sinkAudioIsVoiceRouted()))
             {
-                MAIN_DEBUG (( "HS : EventSysCheckAudioAmpDrive turn off amp\n" ));
+                //MAIN_DEBUG (( "HS : EventSysCheckAudioAmpDrive turn off amp\n" ));
                 setAudioAmplifier(FALSE);
             }
             else
@@ -3575,7 +3579,7 @@ static void handleUEMessage  ( Task task, MessageId id, Message message )
             break;
 
         case EventSysVASessionError:
-            MAIN_DEBUG(("HS: Received Vocie Assistant Session Error\n"));
+            //MAIN_DEBUG(("HS: Received Vocie Assistant Session Error\n"));
             MessageSendLater(&theSink.task, EventUsrVoiceAssistantStart, 0, D_SEC(2)); //add by lfj
             break;
 

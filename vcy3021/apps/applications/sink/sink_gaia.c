@@ -4979,6 +4979,7 @@ void handleGaiaMessage(Task task, MessageId id, Message message)
             }
 			sinkAudioIndicationPlayEvent(EventUsrGaiaConnect); //add audio prompts by lfj 
 			MessageSendLater(&theSink.task, EventUsrVoiceAssistantStart, 0, D_SEC(2)); //add by lfj
+            MessageSendLater(&theSink.task , EventUsrBleStartBonding , 0 , D_SEC(1)) ;
         }
         break;
 

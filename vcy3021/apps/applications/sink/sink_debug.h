@@ -65,7 +65,7 @@ void printVmLogsInTestSystem (const char *format, ...);
 
         /* The individual Debug enables */
 
-        #define DEBUG_MAIN_L1
+        #define DEBUG_MAIN_L1x
         #define DEBUG_A2DPx
         #define DEBUG_ACCESSORYx
         #define DEBUG_AHIx
@@ -170,7 +170,7 @@ void printVmLogsInTestSystem (const char *format, ...);
         #define DEBUG_USBx
 
         /* Debug Voice Assistant (VA) module */
-        #define DEBUG_VA		
+        #define DEBUG_VAx
 
         #define DEBUG_VOLUMEx
         #define DEBUG_WIREDx
